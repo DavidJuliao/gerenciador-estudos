@@ -1,0 +1,166 @@
+[{
+  "_id": {
+    "$oid": "6a0b7f3c5bcbd34189fc30df"
+  },
+  "disciplina": "MICROINFORMÁTICA",
+  "descricao": "COMANDOS LINUX",
+  "prioridade": "ALTA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-18T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP MILITAR",
+      "link": "https://www.qconcursos.com/questoes-militares/questoes?discipline_ids%5B%5D=94&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=1340",
+      "ultimaQuestaoEstudada": "38"
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0cb5c481437170b1840950"
+  },
+  "disciplina": "SISTEMAS DE COMPUTAÇÃO",
+  "descricao": "Arquiteturas",
+  "prioridade": "BAIXA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-19T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=93&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=1107",
+      "ultimaQuestaoEstudada": ""
+    },
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=94&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=2710",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0cd27c81437170b1840951"
+  },
+  "disciplina": "SISTEMAS DE COMPUTAÇÃO",
+  "descricao": "Processadores",
+  "prioridade": "MEDIA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-19T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=93&examining_board_ids%5B%5D=152&exclude_nullified=true&exclude_outdated=true&has_commentaries=true&sort=newest&subject_ids%5B%5D=4603",
+      "ultimaQuestaoEstudada": ""
+    },
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/disciplinas/tecnologia-da-informacao-arquitetura-de-computadores/processamento-paralelo",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0cd77f81437170b1840952"
+  },
+  "disciplina": "SISTEMAS DE COMPUTAÇÃO",
+  "descricao": "THREADS",
+  "prioridade": "MEDIA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-19T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=94&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=3003",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0e1d5cfb3f1368604243c0"
+  },
+  "disciplina": "PROGRAMAÇÃO",
+  "descricao": "PHP",
+  "prioridade": "ALTA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-20T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=160&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=2753",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0e1dccfb3f1368604243c1"
+  },
+  "disciplina": "ANÁLISE, PROJ. DE SISTEMAS E SERV. DE TI",
+  "descricao": "COBIT 5",
+  "prioridade": "MEDIA",
+  "tipo": "CONTEUDO",
+  "dataEstudada": {
+    "$date": "2026-05-21T03:00:00.000Z"
+  },
+  "marcado": false,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-de-concursos/questoes?discipline_ids%5B%5D=99&examining_board_ids%5B%5D=152&exclude_outdated=true&page=2&sort=newest&subject_ids%5B%5D=307",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0e1debfb3f1368604243c2"
+  },
+  "disciplina": "ANÁLISE, PROJ. DE SISTEMAS E SERV. DE TI",
+  "descricao": "CCMMI",
+  "prioridade": "MEDIA",
+  "tipo": "CONTEUDO",
+  "marcado": true,
+  "questoes": [],
+  "_class": "com.estudos.model.Conteudo"
+},
+{
+  "_id": {
+    "$oid": "6a0e33dcfb3f1368604243c3"
+  },
+  "disciplina": "HISTÓRIA",
+  "descricao": "ERA VARGAS",
+  "prioridade": "ALTA",
+  "tipo": "CONTEUDO",
+  "marcado": true,
+  "questoes": [
+    {
+      "banca": "VUNESP",
+      "link": "https://www.qconcursos.com/questoes-militares/questoes?discipline_ids%5B%5D=550&examining_board_ids%5B%5D=152&sort=newest&subject_ids%5B%5D=14913",
+      "ultimaQuestaoEstudada": ""
+    }
+  ],
+  "_class": "com.estudos.model.Conteudo"
+}]

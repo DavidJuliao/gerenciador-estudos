@@ -1,0 +1,104 @@
+[{
+  "_id": {
+    "$oid": "6a09f08faff318679120d859"
+  },
+  "nome": "GEOGRAFIA",
+  "grupo": 1,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0a2aff318679120d85a"
+  },
+  "nome": "SISTEMAS DE COMPUTAÇÃO",
+  "grupo": 1,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0beaff318679120d85b"
+  },
+  "nome": "HISTÓRIA",
+  "grupo": 2,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0c7aff318679120d85c"
+  },
+  "nome": "MICROINFORMÁTICA",
+  "grupo": 2,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0e6aff318679120d85d"
+  },
+  "nome": "PORTUGUÊS",
+  "grupo": 3,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0ecaff318679120d85e"
+  },
+  "nome": "PROGRAMAÇÃO",
+  "grupo": 3,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f0f2aff318679120d85f"
+  },
+  "nome": "BANCO DE DADOS",
+  "grupo": 3,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f101aff318679120d860"
+  },
+  "nome": "ANÁLISE, PROJ. DE SISTEMAS E SERV. DE TI",
+  "grupo": 4,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f114aff318679120d861"
+  },
+  "nome": "HISTÓRIA",
+  "grupo": 4,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f122aff318679120d862"
+  },
+  "nome": "COMUNICAÇÃO DE DADOS",
+  "grupo": 5,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f128aff318679120d863"
+  },
+  "nome": "GEOGRAFIA",
+  "grupo": 5,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f16caff318679120d864"
+  },
+  "nome": "SEGURANÇA",
+  "grupo": 6,
+  "_class": "com.estudos.model.Disciplina"
+},
+{
+  "_id": {
+    "$oid": "6a09f176aff318679120d865"
+  },
+  "nome": "PORTUGUÊS",
+  "grupo": 6,
+  "_class": "com.estudos.model.Disciplina"
+}]

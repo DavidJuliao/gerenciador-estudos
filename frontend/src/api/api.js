@@ -1,0 +1,27 @@
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  headers: { 'Content-Type': 'application/json' }
+})
+
+export const disciplinasApi = {
+  listar: () => api.get('/disciplinas'),
+  buscar: (id) => api.get(`/disciplinas/${id}`),
+  porGrupo: (grupo) => api.get(`/disciplinas/grupo/${grupo}`),
+  criar: (data) => api.post('/disciplinas', data),
+  atualizar: (id, data) => api.put(`/disciplinas/${id}`, data),
+  excluir: (id) => api.delete(`/disciplinas/${id}`)
+}
+
+export const conteudosApi = {
+  listar: () => api.get('/conteudos'),
+  buscar: (id) => api.get(`/conteudos/${id}`),
+  porDisciplina: (nome) => api.get('/conteudos/disciplina', { params: { nome } }),
+  disciplinasDistinct: () => api.get('/conteudos/disciplinas-distinct'),
+  criar: (data) => api.post('/conteudos', data),
+  atualizar: (id, data) => api.put(`/conteudos/${id}`, data),
+  excluir: (id) => api.delete(`/conteudos/${id}`)
+}
+
+export default api

@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: estudos-api
+  data:
+    mongodb:
+      host: ${MONGO_HOST:localhost}
+      port: ${MONGO_PORT:27017}
+      database: ${MONGO_DB:estudos_db}
+      username: ${MONGO_USER:admin}
+      password: ${MONGO_PASSWORD:admin}
+      authentication-database: admin
+
+logging:
+  level:
+    com.estudos: INFO
+    org.springframework.data.mongodb: INFO

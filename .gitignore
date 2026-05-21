@@ -1,0 +1,41 @@
+### Backend (Java / Maven) ###
+backend/target/
+backend/*.log
+**/*.class
+*.jar
+*.war
+*.ear
+
+### Frontend (Node / Vite) ###
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/build/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+### IDE ###
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.apt_generated/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Local env ###
+.env
+.env.local
+.env.*.local
+*.local

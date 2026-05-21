@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: estudos-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: estudos_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - estudos-net
+
+  backend:
+    build: ./backend
+    container_name: estudos-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+      MONGO_DB: estudos_db
+      MONGO_USER: admin
+      MONGO_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - estudos-net
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    container_name: estudos-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - estudos-net
+
+volumes:
+  mongo_data:
+
+networks:
+  estudos-net:
+    driver: bridge

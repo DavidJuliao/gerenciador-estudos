@@ -17,6 +17,7 @@ export default function Layout() {
             <NavLink to="/disciplinas" className={linkClass}>Disciplinas</NavLink>
             <NavLink to="/conteudos" className={linkClass}>Conteúdos</NavLink>
             <NavLink to="/revisoes" className={linkClass}>Revisões</NavLink>
+            <NavLink to="/tempo-estudo" className={linkClass}>Tempo de Estudo</NavLink>
           </nav>
         </div>
       </header>

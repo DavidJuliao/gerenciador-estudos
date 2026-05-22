@@ -3,6 +3,7 @@ import Layout from './components/Layout.jsx'
 import Disciplinas from './pages/Disciplinas.jsx'
 import Conteudos from './pages/Conteudos.jsx'
 import Revisoes from './pages/Revisoes.jsx'
+import TempoEstudo from './pages/TempoEstudo.jsx'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="disciplinas" element={<Disciplinas />} />
         <Route path="conteudos" element={<Conteudos />} />
         <Route path="revisoes" element={<Revisoes />} />
+        <Route path="tempo-estudo" element={<TempoEstudo />} />
       </Route>
     </Routes>
   )

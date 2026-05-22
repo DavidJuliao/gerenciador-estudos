@@ -14,6 +14,14 @@ export const disciplinasApi = {
   excluir: (id) => api.delete(`/disciplinas/${id}`)
 }
 
+export const tempoEstudoApi = {
+  listar: () => api.get('/tempo-estudo'),
+  porIntervalo: (inicio, fim) => api.get('/tempo-estudo', { params: { inicio, fim } }),
+  criar: (data) => api.post('/tempo-estudo', data),
+  atualizar: (id, data) => api.put(`/tempo-estudo/${id}`, data),
+  excluir: (id) => api.delete(`/tempo-estudo/${id}`)
+}
+
 export const conteudosApi = {
   listar: () => api.get('/conteudos'),
   buscar: (id) => api.get(`/conteudos/${id}`),

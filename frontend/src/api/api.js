@@ -32,4 +32,21 @@ export const conteudosApi = {
   excluir: (id) => api.delete(`/conteudos/${id}`)
 }
 
+export const gabaritosApi = {
+  listar: () => api.get('/gabaritos'),
+  porDisciplina: (disciplina) => api.get('/gabaritos', { params: { disciplina } }),
+  buscar: (id) => api.get(`/gabaritos/${id}`),
+  criar: (data) => api.post('/gabaritos', data),
+  atualizar: (id, data) => api.put(`/gabaritos/${id}`, data),
+  excluir: (id) => api.delete(`/gabaritos/${id}`)
+}
+
+export const historicosApi = {
+  porGabarito: (gabaritoId) => api.get(`/gabaritos/${gabaritoId}/historicos`),
+  buscar: (id) => api.get(`/historicos/${id}`),
+  criar: (gabaritoId, data) => api.post(`/gabaritos/${gabaritoId}/historicos`, data),
+  atualizar: (id, data) => api.put(`/historicos/${id}`, data),
+  excluir: (id) => api.delete(`/historicos/${id}`)
+}
+
 export default api

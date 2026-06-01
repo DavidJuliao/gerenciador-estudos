@@ -1,33 +1,16 @@
 version: '3.8'
 
-services:
-  mongo:
-    image: mongo:7
-    container_name: estudos-mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
-      MONGO_INITDB_DATABASE: estudos_db
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - estudos-net
+# Banco de dados: MongoDB Atlas (nuvem). Não há mais serviço de Mongo local.
+# A string de conexão padrão está em backend/src/main/resources/application.yml
+# e pode ser sobrescrita aqui pela variável MONGO_URI.
 
+services:
   backend:
     build: ./backend
     container_name: estudos-backend
     restart: unless-stopped
-    depends_on:
-      - mongo
     environment:
-      MONGO_HOST: mongo
-      MONGO_PORT: 27017
-      MONGO_DB: estudos_db
-      MONGO_USER: admin
-      MONGO_PASSWORD: admin
+      MONGO_URI: mongodb+srv://jdavidjl97_db_user:6nWHwIqhNfq6cpTP@cluster0.frz73kr.mongodb.net/estudos_db?retryWrites=true&w=majority&appName=Cluster0
     ports:
       - "8080:8080"
     networks:
@@ -46,9 +29,6 @@ services:
       - "3000:80"
     networks:
       - estudos-net
-
-volumes:
-  mongo_data:
 
 networks:
   estudos-net:

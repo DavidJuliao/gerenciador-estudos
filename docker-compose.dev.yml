@@ -1,0 +1,41 @@
+version: '3.8'
+
+# Ambiente de DESENVOLVIMENTO.
+# Banco: MongoDB Atlas (nuvem) — não há Mongo local.
+# Frontend roda em modo dev (Vite + hot reload) dentro de um container Node.
+
+services:
+  backend:
+    build: ./backend
+    container_name: estudos-backend
+    restart: unless-stopped
+    environment:
+      MONGO_URI: mongodb+srv://jdavidjl97_db_user:6nWHwIqhNfq6cpTP@cluster0.frz73kr.mongodb.net/estudos_db?retryWrites=true&w=majority&appName=Cluster0
+    ports:
+      - "8080:8080"
+    networks:
+      - estudos-net
+
+  # Frontend em modo desenvolvimento: Vite dev server com hot reload.
+  # Roda 'npm install' + 'npm run dev' dentro do container Node — sem npm na sua maquina.
+  frontend-dev:
+    image: node:20-alpine
+    container_name: estudos-frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    environment:
+      VITE_API_URL: http://localhost:8080
+      CHOKIDAR_USEPOLLING: "true"  # necessario para hot reload funcionar via bind mount (Windows/WSL)
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app          # seu codigo-fonte (editar local = reflete no container)
+      - /app/node_modules        # node_modules isolado dentro do container
+    networks:
+      - estudos-net
+
+networks:
+  estudos-net:
+    driver: bridge

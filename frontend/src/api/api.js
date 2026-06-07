@@ -49,4 +49,20 @@ export const historicosApi = {
   excluir: (id) => api.delete(`/historicos/${id}`)
 }
 
+export const simuladosApi = {
+  listar: () => api.get('/simulados'),
+  buscar: (id) => api.get(`/simulados/${id}`),
+  criar: (data) => api.post('/simulados', data),
+  atualizar: (id, data) => api.put(`/simulados/${id}`, data),
+  excluir: (id) => api.delete(`/simulados/${id}`)
+}
+
+export const simuladoHistoricosApi = {
+  porSimulado: (simuladoId) => api.get(`/simulados/${simuladoId}/historicos`),
+  buscar: (id) => api.get(`/simulado-historicos/${id}`),
+  criar: (simuladoId, data) => api.post(`/simulados/${simuladoId}/historicos`, data),
+  atualizar: (id, data) => api.put(`/simulado-historicos/${id}`, data),
+  excluir: (id) => api.delete(`/simulado-historicos/${id}`)
+}
+
 export default api

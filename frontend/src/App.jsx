@@ -5,6 +5,7 @@ import Conteudos from './pages/Conteudos.jsx'
 import Revisoes from './pages/Revisoes.jsx'
 import TempoEstudo from './pages/TempoEstudo.jsx'
 import Gabaritos from './pages/Gabaritos.jsx'
+import Simulados from './pages/Simulados.jsx'
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="revisoes" element={<Revisoes />} />
         <Route path="tempo-estudo" element={<TempoEstudo />} />
         <Route path="gabaritos" element={<Gabaritos />} />
+        <Route path="simulados" element={<Simulados />} />
       </Route>
     </Routes>
   )

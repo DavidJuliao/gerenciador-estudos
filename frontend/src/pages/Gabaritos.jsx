@@ -141,11 +141,12 @@ function ListaDisciplinas({ onSelecionar, onMsg }) {
 
 /* -------------------------------------------------------------- 2) Gabaritos */
 
-const gabaritoFormInicial = { numero: '', conteudoId: '', questoesJson: '' }
+const gabaritoFormInicial = { numero: '', disciplina: '', conteudoId: '', questoesJson: '' }
 
 function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
   const [gabaritos, setGabaritos] = useState([])
   const [conteudos, setConteudos] = useState([])
+  const [disciplinasNomes, setDisciplinasNomes] = useState([])
   const [loading, setLoading] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [form, setForm] = useState(gabaritoFormInicial)
@@ -171,10 +172,20 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
       .catch(() => setConteudos([]))
   }, [disciplina])
 
+  // Carrega os nomes de disciplina cadastrados (únicos) para o select do formulário.
+  useEffect(() => {
+    disciplinasApi.listar()
+      .then((res) => {
+        const nomes = [...new Set((res.data || []).map((d) => (d.nome || '').trim()).filter(Boolean))]
+        setDisciplinasNomes(nomes.sort((a, b) => a.localeCompare(b)))
+      })
+      .catch(() => setDisciplinasNomes([]))
+  }, [])
+
   const nomeConteudo = (id) => conteudos.find((c) => c.id === id)?.descricao
 
   const abrirCadastro = () => {
-    setForm(gabaritoFormInicial)
+    setForm({ ...gabaritoFormInicial, disciplina })
     setEditandoId(null)
     setModalAberto(true)
   }
@@ -185,6 +196,7 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
     ordenarQuestoes(g.questoes).forEach((q) => { questoesOrdenadas[q] = g.questoes[q] })
     setForm({
       numero: g.numero ?? '',
+      disciplina: g.disciplina || disciplina,
       conteudoId: g.conteudoId || '',
       questoesJson: JSON.stringify(questoesOrdenadas, null, 2)
     })
@@ -274,6 +286,7 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
         <Modal titulo={editandoId ? 'Editar gabarito' : 'Novo gabarito'} onClose={() => setModalAberto(false)}>
           <GabaritoForm
             disciplina={disciplina}
+            disciplinasNomes={disciplinasNomes}
             conteudos={conteudos}
             form={form}
             setForm={setForm}
@@ -288,12 +301,15 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
   )
 }
 
-function GabaritoForm({ disciplina, conteudos, form, setForm, editando, onCancelar, onSubmeter, onMsg }) {
+function GabaritoForm({ disciplina, disciplinasNomes = [], conteudos, form, setForm, editando, onCancelar, onSubmeter, onMsg }) {
   const exemplo = `{
   "1": "B",
   "2": "A",
   "3": "C"
 }`
+
+  // Garante que a disciplina atual apareça no select mesmo que não esteja na lista carregada.
+  const opcoesDisciplina = [...new Set([form.disciplina, ...disciplinasNomes].filter(Boolean))]
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -318,9 +334,14 @@ function GabaritoForm({ disciplina, conteudos, form, setForm, editando, onCancel
       return
     }
 
+    if (!form.disciplina) {
+      onMsg({ tipo: 'erro', texto: 'Selecione a disciplina.' })
+      return
+    }
+
     onSubmeter({
       numero: parseInt(form.numero),
-      disciplina,
+      disciplina: form.disciplina,
       conteudoId: form.conteudoId || null,
       questoes: normalizarQuestoes(mapa)
     })
@@ -341,12 +362,16 @@ function GabaritoForm({ disciplina, conteudos, form, setForm, editando, onCancel
         </label>
         <label className="text-sm">
           Disciplina
-          <input
-            type="text"
-            value={disciplina}
-            disabled
-            className="border rounded px-3 py-2 w-full mt-1 bg-gray-100 text-gray-600"
-          />
+          <select
+            value={form.disciplina}
+            onChange={(e) => setForm((f) => ({ ...f, disciplina: e.target.value }))}
+            className="border rounded px-3 py-2 w-full mt-1"
+          >
+            <option value="">Selecione...</option>
+            {opcoesDisciplina.map((nome) => (
+              <option key={nome} value={nome}>{nome}</option>
+            ))}
+          </select>
         </label>
         <label className="text-sm">
           Conteúdo (opcional)

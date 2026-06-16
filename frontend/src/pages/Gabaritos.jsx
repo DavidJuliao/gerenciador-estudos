@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { disciplinasApi, conteudosApi, gabaritosApi, historicosApi } from '../api/api.js'
 
 const ALTERNATIVAS = ['A', 'B', 'C', 'D', 'E']
@@ -141,7 +141,7 @@ function ListaDisciplinas({ onSelecionar, onMsg }) {
 
 /* -------------------------------------------------------------- 2) Gabaritos */
 
-const gabaritoFormInicial = { numero: '', disciplina: '', conteudoId: '', questoesJson: '' }
+const gabaritoFormInicial = { numero: '', disciplina: '', conteudoId: '', conteudoDescricao: '', questoesJson: '' }
 
 function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
   const [gabaritos, setGabaritos] = useState([])
@@ -165,11 +165,15 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
     }
   }
 
-  useEffect(() => {
-    carregar()
+  const carregarConteudos = () => {
     conteudosApi.porDisciplina(disciplina)
       .then((res) => setConteudos(res.data || []))
       .catch(() => setConteudos([]))
+  }
+
+  useEffect(() => {
+    carregar()
+    carregarConteudos()
   }, [disciplina])
 
   // Carrega os nomes de disciplina cadastrados (únicos) para o select do formulário.
@@ -198,6 +202,7 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
       numero: g.numero ?? '',
       disciplina: g.disciplina || disciplina,
       conteudoId: g.conteudoId || '',
+      conteudoDescricao: nomeConteudo(g.conteudoId) || '',
       questoesJson: JSON.stringify(questoesOrdenadas, null, 2)
     })
     setEditandoId(g.id)
@@ -227,6 +232,7 @@ function ListaGabaritos({ disciplina, onSelecionar, onMsg }) {
       }
       setModalAberto(false)
       carregar()
+      carregarConteudos()
     } catch {
       onMsg({ tipo: 'erro', texto: 'Erro ao salvar gabarito' })
     }
@@ -311,7 +317,7 @@ function GabaritoForm({ disciplina, disciplinasNomes = [], conteudos, form, setF
   // Garante que a disciplina atual apareça no select mesmo que não esteja na lista carregada.
   const opcoesDisciplina = [...new Set([form.disciplina, ...disciplinasNomes].filter(Boolean))]
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (form.numero === '' || form.numero === null) {
@@ -339,10 +345,36 @@ function GabaritoForm({ disciplina, disciplinasNomes = [], conteudos, form, setF
       return
     }
 
+    // Resolve o conteúdo: se o texto digitado já existe, usa o id dele; se for
+    // novo, cadastra um conteúdo (para aparecer também na tela de Conteúdos).
+    let conteudoId = null
+    const descricao = (form.conteudoDescricao || '').trim()
+    if (descricao) {
+      const existente = conteudos.find(
+        (c) => (c.descricao || '').trim().toLowerCase() === descricao.toLowerCase()
+      )
+      if (existente) {
+        conteudoId = existente.id
+      } else {
+        try {
+          const res = await conteudosApi.criar({
+            disciplina: form.disciplina,
+            descricao,
+            prioridade: 'MEDIA',
+            tipo: 'CONTEUDO'
+          })
+          conteudoId = res.data?.id || null
+        } catch {
+          onMsg({ tipo: 'erro', texto: 'Erro ao cadastrar o novo conteúdo.' })
+          return
+        }
+      }
+    }
+
     onSubmeter({
       numero: parseInt(form.numero),
       disciplina: form.disciplina,
-      conteudoId: form.conteudoId || null,
+      conteudoId,
       questoes: normalizarQuestoes(mapa)
     })
   }
@@ -375,16 +407,18 @@ function GabaritoForm({ disciplina, disciplinasNomes = [], conteudos, form, setF
         </label>
         <label className="text-sm">
           Conteúdo (opcional)
-          <select
-            value={form.conteudoId}
-            onChange={(e) => setForm((f) => ({ ...f, conteudoId: e.target.value }))}
+          <input
+            list="lista-conteudos"
+            value={form.conteudoDescricao}
+            onChange={(e) => setForm((f) => ({ ...f, conteudoDescricao: e.target.value }))}
+            placeholder="selecione ou digite um novo"
             className="border rounded px-3 py-2 w-full mt-1"
-          >
-            <option value="">—</option>
+          />
+          <datalist id="lista-conteudos">
             {conteudos.map((c) => (
-              <option key={c.id} value={c.id}>{c.descricao}</option>
+              <option key={c.id} value={c.descricao} />
             ))}
-          </select>
+          </datalist>
         </label>
       </div>
 
@@ -448,6 +482,9 @@ function ListaHistoricos({ gabarito, onMsg }) {
   const abrirCadastro = () => { setEditando(null); setModalAberto(true) }
   const abrirEdicao = (h) => { setEditando(h); setModalAberto(true) }
 
+  // Fecha o modal e recarrega a lista (reflete também rascunhos salvos automaticamente).
+  const fecharModal = () => { setModalAberto(false); setEditando(null); carregar() }
+
   const excluir = async (h) => {
     if (!confirm('Excluir este histórico?')) return
     try {
@@ -460,20 +497,15 @@ function ListaHistoricos({ gabarito, onMsg }) {
     }
   }
 
-  const submeter = async (payload) => {
-    try {
-      if (editando) {
-        await historicosApi.atualizar(editando.id, payload)
-        onMsg({ tipo: 'sucesso', texto: 'Histórico atualizado' })
-      } else {
-        await historicosApi.criar(gabarito.id, payload)
-        onMsg({ tipo: 'sucesso', texto: 'Histórico cadastrado' })
-      }
-      setModalAberto(false)
-      carregar()
-    } catch {
-      onMsg({ tipo: 'erro', texto: 'Erro ao salvar histórico' })
+  // Cria (sem id) ou atualiza (com id) o histórico. Retorna o registro salvo.
+  // Usado tanto pelo auto-save (corrigir=false) quanto pelos botões finais.
+  const persistir = async (payload, { id, corrigir }) => {
+    if (id) {
+      const res = await historicosApi.atualizar(id, payload, corrigir)
+      return res.data
     }
+    const res = await historicosApi.criar(gabarito.id, payload, corrigir)
+    return res.data
   }
 
   const ordenados = useMemo(
@@ -510,15 +542,22 @@ function ListaHistoricos({ gabarito, onMsg }) {
             </thead>
             <tbody>
               {ordenados.map((h) => {
+                const corrigido = estaCorrigido(h)
                 const pct = h.totalQuestoes ? Math.round((h.acertos / h.totalQuestoes) * 100) : 0
                 return (
                   <tr key={h.id} className="border-t hover:bg-blue-50">
                     <td className="p-2">{formatarData(h.dataResolucao)}</td>
-                    <td className="p-2 font-semibold">{h.acertos}/{h.totalQuestoes}</td>
+                    <td className="p-2 font-semibold">
+                      {corrigido ? `${h.acertos}/${h.totalQuestoes}` : <span className="text-gray-400 font-normal">parcial</span>}
+                    </td>
                     <td className="p-2">
-                      <span className={`px-2 py-0.5 rounded text-sm ${pct >= 70 ? 'bg-green-100 text-green-800' : pct >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-                        {pct}%
-                      </span>
+                      {corrigido ? (
+                        <span className={`px-2 py-0.5 rounded text-sm ${pct >= 70 ? 'bg-green-100 text-green-800' : pct >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                          {pct}%
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">não corrigido</span>
+                      )}
                     </td>
                     <td className="p-2 text-right space-x-2 whitespace-nowrap">
                       <button onClick={() => setDetalhe(h)} className="text-gray-700 hover:underline">Ver</button>
@@ -540,12 +579,14 @@ function ListaHistoricos({ gabarito, onMsg }) {
       )}
 
       {modalAberto && (
-        <Modal titulo={editando ? 'Editar histórico' : 'Nova resolução'} onClose={() => setModalAberto(false)}>
+        <Modal titulo={editando ? 'Editar histórico' : 'Nova resolução'} onClose={fecharModal}>
           <HistoricoForm
             numeros={numeros}
             inicial={editando}
-            onCancelar={() => setModalAberto(false)}
-            onSubmeter={submeter}
+            persistir={persistir}
+            onConcluir={(texto) => { onMsg({ tipo: 'sucesso', texto }); fecharModal() }}
+            onCancelar={fecharModal}
+            onMsg={onMsg}
           />
         </Modal>
       )}
@@ -553,12 +594,14 @@ function ListaHistoricos({ gabarito, onMsg }) {
   )
 }
 
-function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
+function HistoricoForm({ numeros, inicial, persistir, onConcluir, onCancelar, onMsg }) {
   const [data, setData] = useState(inicial?.dataResolucao || hoje())
   const [respostas, setRespostas] = useState({ ...(inicial?.respostas || {}) })
   const [atencao, setAtencao] = useState({ ...(inicial?.atencao || {}) })
   const [observacoes, setObservacoes] = useState({ ...(inicial?.observacoes || {}) })
   const [idx, setIdx] = useState(0)
+  const [registroId, setRegistroId] = useState(inicial?.id ?? null)
+  const [statusRascunho, setStatusRascunho] = useState(null) // null | 'salvando' | 'salvo' | 'erro'
 
   const total = numeros.length
   const q = numeros[idx]
@@ -575,19 +618,48 @@ function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
   const toggleAtencao = () => setAtencao((a) => ({ ...a, [q]: !a[q] }))
   const setObs = (v) => setObservacoes((o) => ({ ...o, [q]: v }))
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const construirPayload = () => {
     // Remove observações/atenção vazias para não poluir o documento.
     const obsLimpa = {}
     Object.entries(observacoes).forEach(([k, v]) => { if (v && v.trim()) obsLimpa[k] = v.trim() })
     const atencaoLimpa = {}
     Object.entries(atencao).forEach(([k, v]) => { if (v) atencaoLimpa[k] = true })
-    onSubmeter({
-      dataResolucao: data || null,
-      respostas,
-      observacoes: obsLimpa,
-      atencao: atencaoLimpa
-    })
+    return { dataResolucao: data || null, respostas, observacoes: obsLimpa, atencao: atencaoLimpa }
+  }
+
+  // Auto-save do rascunho (sem corrigir) a cada mudança, com debounce.
+  const timerRef = useRef(null)
+  const primeiraRender = useRef(true)
+  useEffect(() => {
+    if (primeiraRender.current) { primeiraRender.current = false; return }
+    if (Object.keys(respostas).length === 0) return
+    setStatusRascunho('salvando')
+    timerRef.current = setTimeout(async () => {
+      try {
+        const salvo = await persistir(construirPayload(), { id: registroId, corrigir: false })
+        if (salvo?.id) setRegistroId(salvo.id)
+        setStatusRascunho('salvo')
+      } catch {
+        setStatusRascunho('erro')
+      }
+    }, 700)
+    return () => clearTimeout(timerRef.current)
+  }, [respostas, atencao, observacoes, data])
+
+  // corrigir = true → calcula o resultado; false → salva resultado parcial.
+  const salvar = async (corrigir) => {
+    if (timerRef.current) clearTimeout(timerRef.current) // evita auto-save concorrente
+    try {
+      await persistir(construirPayload(), { id: registroId, corrigir })
+      onConcluir(corrigir ? 'Histórico corrigido e salvo' : 'Resultado parcial salvo')
+    } catch {
+      onMsg({ tipo: 'erro', texto: 'Erro ao salvar histórico' })
+    }
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    salvar(true)
   }
 
   if (total === 0) {
@@ -606,7 +678,12 @@ function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
             className="border rounded px-3 py-2 mt-1 block"
           />
         </label>
-        <div className="text-sm text-gray-600">{respondidas}/{total} respondidas</div>
+        <div className="text-sm text-gray-600 flex items-center gap-3">
+          <span>{respondidas}/{total} respondidas</span>
+          {statusRascunho === 'salvando' && <span className="text-gray-400">salvando rascunho…</span>}
+          {statusRascunho === 'salvo' && <span className="text-green-600">rascunho salvo ✓</span>}
+          {statusRascunho === 'erro' && <span className="text-red-600">falha ao salvar rascunho</span>}
+        </div>
       </div>
 
       {/* Navegador: clique em qualquer número para voltar/avançar a uma questão. */}
@@ -698,6 +775,9 @@ function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
         <button type="button" onClick={onCancelar} className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">
           Cancelar
         </button>
+        <button type="button" onClick={() => salvar(false)} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+          Salvar parcial
+        </button>
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Salvar e corrigir
         </button>
@@ -707,15 +787,22 @@ function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
 }
 
 function DetalheHistorico({ gabarito, historico, numeros }) {
+  const corrigido = estaCorrigido(historico)
   const pct = historico.totalQuestoes ? Math.round((historico.acertos / historico.totalQuestoes) * 100) : 0
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="text-3xl font-bold">{historico.acertos}/{historico.totalQuestoes}</div>
-        <span className={`px-2 py-1 rounded ${pct >= 70 ? 'bg-green-100 text-green-800' : pct >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
-          {pct}% de acerto
-        </span>
-      </div>
+      {corrigido ? (
+        <div className="flex items-center gap-4">
+          <div className="text-3xl font-bold">{historico.acertos}/{historico.totalQuestoes}</div>
+          <span className={`px-2 py-1 rounded ${pct >= 70 ? 'bg-green-100 text-green-800' : pct >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+            {pct}% de acerto
+          </span>
+        </div>
+      ) : (
+        <div className="bg-yellow-50 text-yellow-800 px-3 py-2 rounded text-sm">
+          Resultado parcial — ainda não corrigido. Edite e use "Salvar e corrigir" para calcular os acertos.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2">
         {numeros.map((q) => {
@@ -723,17 +810,15 @@ function DetalheHistorico({ gabarito, historico, numeros }) {
           const marcada = historico.respostas?.[q] || '—'
           const correta = gabarito.questoes?.[q] || '—'
           const temAtencao = historico.atencao?.[q]
+          const cor = !corrigido ? 'bg-gray-50 border-gray-200' : acertou ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
           return (
-            <div
-              key={q}
-              className={`rounded p-2 text-sm border ${acertou ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
-            >
+            <div key={q} className={`rounded p-2 text-sm border ${cor}`}>
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-600">{q}</span>
                 {temAtencao && <span title="Atenção">⚠️</span>}
               </div>
-              <div className={acertou ? 'text-green-700' : 'text-red-700'}>
-                {marcada} {acertou ? '✓' : `✗ (${correta})`}
+              <div className={!corrigido ? 'text-gray-700' : acertou ? 'text-green-700' : 'text-red-700'}>
+                {marcada}{corrigido ? (acertou ? ' ✓' : ` ✗ (${correta})`) : ''}
               </div>
               {historico.observacoes?.[q] && (
                 <div className="text-xs text-gray-500 mt-1">{historico.observacoes[q]}</div>
@@ -753,6 +838,12 @@ function pareceMapaRespostas(obj) {
   const entries = Object.entries(obj || {})
   if (entries.length === 0) return false
   return entries.every(([k, v]) => /^\d+$/.test(k) && typeof v === 'string' && /^[A-Ea-e]$/.test(v.trim()))
+}
+
+// Histórico é considerado corrigido se a flag estiver setada ou (compatibilidade
+// com dados antigos) se já houver resultado por questão calculado.
+function estaCorrigido(h) {
+  return h?.corrigido === true || (h?.resultadoPorQuestao && Object.keys(h.resultadoPorQuestao).length > 0)
 }
 
 // Normaliza as respostas: descarta vazios e deixa as alternativas em maiúsculo.

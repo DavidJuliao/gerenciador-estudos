@@ -29,21 +29,36 @@ public class GabaritoHistoricoService {
                 .orElseThrow(() -> new RuntimeException("Histórico não encontrado com id: " + id));
     }
 
-    public GabaritoHistorico criar(String gabaritoId, GabaritoHistorico historico) {
+    public GabaritoHistorico criar(String gabaritoId, GabaritoHistorico historico, boolean corrigir) {
         historico.setId(null);
         historico.setGabaritoId(gabaritoId);
-        corrigir(historico);
+        aplicar(historico, corrigir);
         return repository.save(historico);
     }
 
-    public GabaritoHistorico atualizar(String id, GabaritoHistorico dados) {
+    public GabaritoHistorico atualizar(String id, GabaritoHistorico dados, boolean corrigir) {
         GabaritoHistorico existente = buscarPorId(id);
         existente.setDataResolucao(dados.getDataResolucao());
         existente.setRespostas(dados.getRespostas());
         existente.setObservacoes(dados.getObservacoes());
         existente.setAtencao(dados.getAtencao());
-        corrigir(existente);
+        aplicar(existente, corrigir);
         return repository.save(existente);
+    }
+
+    // Corrige (calcula resultado) ou apenas marca como salvo parcialmente.
+    private void aplicar(GabaritoHistorico h, boolean corrigir) {
+        if (corrigir) {
+            corrigir(h);
+            h.setCorrigido(true);
+        } else {
+            Gabarito gabarito = gabaritoService.buscarPorId(h.getGabaritoId());
+            int total = gabarito.getQuestoes() != null ? gabarito.getQuestoes().size() : 0;
+            h.setResultadoPorQuestao(new LinkedHashMap<>());
+            h.setAcertos(0);
+            h.setTotalQuestoes(total);
+            h.setCorrigido(false);
+        }
     }
 
     public void excluir(String id) {

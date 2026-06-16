@@ -23,8 +23,9 @@ public class GabaritoHistoricoController {
 
     @PostMapping("/gabaritos/{gabaritoId}/historicos")
     public ResponseEntity<GabaritoHistorico> criar(@PathVariable String gabaritoId,
+                                                   @RequestParam(defaultValue = "true") boolean corrigir,
                                                    @RequestBody GabaritoHistorico historico) {
-        return ResponseEntity.ok(service.criar(gabaritoId, historico));
+        return ResponseEntity.ok(service.criar(gabaritoId, historico, corrigir));
     }
 
     @GetMapping("/historicos/{id}")
@@ -34,8 +35,9 @@ public class GabaritoHistoricoController {
 
     @PutMapping("/historicos/{id}")
     public GabaritoHistorico atualizar(@PathVariable String id,
+                                       @RequestParam(defaultValue = "true") boolean corrigir,
                                        @RequestBody GabaritoHistorico historico) {
-        return service.atualizar(id, historico);
+        return service.atualizar(id, historico, corrigir);
     }
 
     @DeleteMapping("/historicos/{id}")

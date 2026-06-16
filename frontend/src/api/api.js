@@ -44,8 +44,8 @@ export const gabaritosApi = {
 export const historicosApi = {
   porGabarito: (gabaritoId) => api.get(`/gabaritos/${gabaritoId}/historicos`),
   buscar: (id) => api.get(`/historicos/${id}`),
-  criar: (gabaritoId, data) => api.post(`/gabaritos/${gabaritoId}/historicos`, data),
-  atualizar: (id, data) => api.put(`/historicos/${id}`, data),
+  criar: (gabaritoId, data, corrigir = true) => api.post(`/gabaritos/${gabaritoId}/historicos`, data, { params: { corrigir } }),
+  atualizar: (id, data, corrigir = true) => api.put(`/historicos/${id}`, data, { params: { corrigir } }),
   excluir: (id) => api.delete(`/historicos/${id}`)
 }
 

@@ -39,4 +39,7 @@ public class GabaritoHistorico {
     private int acertos;
 
     private int totalQuestoes;
+
+    // false = salvo parcialmente (sem corrigir); true = corrigido contra o gabarito.
+    private boolean corrigido;
 }

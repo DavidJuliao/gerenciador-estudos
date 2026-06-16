@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { simuladosApi, simuladoHistoricosApi } from '../api/api.js'
+import { simuladosApi, simuladoHistoricosApi, conteudosApi, disciplinasApi } from '../api/api.js'
 
 const ALTERNATIVAS = ['A', 'B', 'C', 'D', 'E']
 
@@ -53,6 +53,8 @@ const simuladoFormInicial = { numero: '', questoesJson: '', disciplinas: {}, con
 
 function ListaSimulados({ onSelecionar, onMsg }) {
   const [simulados, setSimulados] = useState([])
+  const [disciplinasNomes, setDisciplinasNomes] = useState([])
+  const [conteudosTodos, setConteudosTodos] = useState([])
   const [loading, setLoading] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [form, setForm] = useState(simuladoFormInicial)
@@ -72,6 +74,19 @@ function ListaSimulados({ onSelecionar, onMsg }) {
   }
 
   useEffect(() => { carregar() }, [])
+
+  // Carrega disciplinas e conteúdos cadastrados para sugerir no formulário.
+  useEffect(() => {
+    disciplinasApi.listar()
+      .then((res) => {
+        const nomes = [...new Set((res.data || []).map((d) => (d.nome || '').trim()).filter(Boolean))]
+        setDisciplinasNomes(nomes.sort((a, b) => a.localeCompare(b)))
+      })
+      .catch(() => setDisciplinasNomes([]))
+    conteudosApi.listar()
+      .then((res) => setConteudosTodos(res.data || []))
+      .catch(() => setConteudosTodos([]))
+  }, [])
 
   const abrirCadastro = () => {
     setForm(simuladoFormInicial)
@@ -176,6 +191,8 @@ function ListaSimulados({ onSelecionar, onMsg }) {
           <SimuladoForm
             form={form}
             setForm={setForm}
+            disciplinasNomes={disciplinasNomes}
+            conteudosTodos={conteudosTodos}
             editando={!!editandoId}
             onCancelar={() => setModalAberto(false)}
             onSubmeter={submeter}
@@ -187,7 +204,13 @@ function ListaSimulados({ onSelecionar, onMsg }) {
   )
 }
 
-function SimuladoForm({ form, setForm, editando, onCancelar, onSubmeter, onMsg }) {
+function SimuladoForm({ form, setForm, disciplinasNomes = [], conteudosTodos = [], editando, onCancelar, onSubmeter, onMsg }) {
+  // Sugestões de conteúdo filtradas pela disciplina informada na própria questão.
+  const conteudosDaDisciplina = (disc) => {
+    const d = (disc || '').trim().toLowerCase()
+    const filtrados = conteudosTodos.filter((c) => !d || (c.disciplina || '').trim().toLowerCase() === d)
+    return [...new Set(filtrados.map((c) => c.descricao).filter(Boolean))].sort((a, b) => a.localeCompare(b))
+  }
   const exemplo = `{
   "1": "B",
   "2": "A",
@@ -274,6 +297,11 @@ function SimuladoForm({ form, setForm, editando, onCancelar, onSubmeter, onMsg }
 
       {jsonOk === true && numeros.length > 0 && (
         <div>
+          <datalist id="lista-disciplinas-simulado">
+            {disciplinasNomes.map((nome) => (
+              <option key={nome} value={nome} />
+            ))}
+          </datalist>
           <div className="text-sm font-medium mb-1">Disciplina e conteúdo por questão (opcional)</div>
           <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
             <div className="flex items-center gap-2 text-xs text-gray-400 px-1">
@@ -288,6 +316,7 @@ function SimuladoForm({ form, setForm, editando, onCancelar, onSubmeter, onMsg }
                 <span className="w-8 text-center text-sm font-medium text-gray-700">{mapa[q]}</span>
                 <input
                   type="text"
+                  list="lista-disciplinas-simulado"
                   placeholder="disciplina"
                   value={form.disciplinas[q] || ''}
                   onChange={(e) => setDisc(q, e.target.value)}
@@ -295,11 +324,17 @@ function SimuladoForm({ form, setForm, editando, onCancelar, onSubmeter, onMsg }
                 />
                 <input
                   type="text"
+                  list={`lista-conteudos-${q}`}
                   placeholder="conteúdo"
                   value={form.conteudos[q] || ''}
                   onChange={(e) => setCont(q, e.target.value)}
                   className="border rounded px-2 py-1 text-sm flex-1 min-w-0"
                 />
+                <datalist id={`lista-conteudos-${q}`}>
+                  {conteudosDaDisciplina(form.disciplinas[q]).map((desc) => (
+                    <option key={desc} value={desc} />
+                  ))}
+                </datalist>
               </div>
             ))}
           </div>
@@ -434,7 +469,7 @@ function ListaHistoricos({ simulado, onMsg }) {
 
       {detalhe && (
         <Modal titulo={`Resolução de ${formatarData(detalhe.dataResolucao)}`} onClose={() => setDetalhe(null)}>
-          <DetalheHistorico simulado={simulado} historico={detalhe} numeros={numeros} />
+          <DetalheHistorico simulado={simulado} historico={detalhe} numeros={numeros} onMsg={onMsg} />
         </Modal>
       )}
 
@@ -600,8 +635,31 @@ function HistoricoForm({ numeros, inicial, onCancelar, onSubmeter }) {
   )
 }
 
-function DetalheHistorico({ simulado, historico, numeros }) {
+function DetalheHistorico({ simulado, historico, numeros, onMsg }) {
   const pct = historico.totalQuestoes ? Math.round((historico.acertos / historico.totalQuestoes) * 100) : 0
+
+  // Busca o conteúdo cadastrado (disciplina + descrição) e marca para revisar.
+  const revisar = async (disciplina, conteudo) => {
+    if (!disciplina || !conteudo) {
+      onMsg({ tipo: 'erro', texto: 'Esta questão não tem disciplina/conteúdo informados.' })
+      return
+    }
+    try {
+      const res = await conteudosApi.porDisciplina(disciplina)
+      const alvo = (res.data || []).find(
+        (c) => (c.descricao || '').trim().toLowerCase() === conteudo.trim().toLowerCase()
+      )
+      if (!alvo) {
+        onMsg({ tipo: 'erro', texto: `Conteúdo "${conteudo}" não está cadastrado em ${disciplina}.` })
+        return
+      }
+      await conteudosApi.atualizar(alvo.id, { ...alvo, marcado: true })
+      onMsg({ tipo: 'sucesso', texto: `"${conteudo}" marcado para revisar.` })
+    } catch {
+      onMsg({ tipo: 'erro', texto: 'Erro ao marcar para revisar.' })
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -611,6 +669,10 @@ function DetalheHistorico({ simulado, historico, numeros }) {
         </span>
       </div>
 
+      <p className="text-xs text-gray-400">
+        Passe o mouse sobre as questões erradas ou marcadas (⚠️) para ver a disciplina/conteúdo e revisar.
+      </p>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {numeros.map((q) => {
           const acertou = historico.resultadoPorQuestao?.[q]
@@ -619,10 +681,11 @@ function DetalheHistorico({ simulado, historico, numeros }) {
           const temAtencao = historico.atencao?.[q]
           const disciplina = simulado.disciplinas?.[q]
           const conteudo = simulado.conteudos?.[q]
+          const destacar = !acertou || temAtencao
           return (
             <div
               key={q}
-              className={`rounded p-2 text-sm border ${acertou ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+              className={`group relative rounded p-2 text-sm border ${acertou ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-600">Questão {q}</span>
@@ -633,11 +696,36 @@ function DetalheHistorico({ simulado, historico, numeros }) {
                   </span>
                 </span>
               </div>
-              {(disciplina || conteudo) && (
-                <div className="text-xs text-gray-500 mt-1">
-                  {[disciplina, conteudo].filter(Boolean).join(' · ')}
+
+              {/* Questões corretas: disciplina/conteúdo inline */}
+              {!destacar && (disciplina || conteudo) && (
+                <div className="text-xs text-gray-500 mt-1">{[disciplina, conteudo].filter(Boolean).join(' · ')}</div>
+              )}
+
+              {/* Questões erradas ou marcadas: painel de revisão no hover */}
+              {destacar && (
+                <div className="hidden group-hover:block mt-2 border-t pt-2 space-y-1">
+                  {disciplina && (
+                    <div className="text-xs text-gray-600"><span className="font-medium">Disciplina:</span> {disciplina}</div>
+                  )}
+                  {conteudo && (
+                    <div className="text-xs text-gray-600"><span className="font-medium">Conteúdo:</span> {conteudo}</div>
+                  )}
+                  {!disciplina && !conteudo && (
+                    <div className="text-xs text-gray-400">Sem disciplina/conteúdo informados.</div>
+                  )}
+                  {conteudo && (
+                    <button
+                      type="button"
+                      onClick={() => revisar(disciplina, conteudo)}
+                      className="mt-1 text-xs bg-amber-500 text-white px-2 py-1 rounded hover:bg-amber-600"
+                    >
+                      Revisar
+                    </button>
+                  )}
                 </div>
               )}
+
               {historico.observacoes?.[q] && (
                 <div className="text-xs text-gray-500 mt-1 italic">{historico.observacoes[q]}</div>
               )}
